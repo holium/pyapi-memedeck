@@ -10,7 +10,7 @@ class AspectRatios(str, Enum):
     LANDSCAPE = "landscape"
 
 class ImageStatus(str, Enum):
-    SUBMITTED = "submitted"
+    PROCESSING = "processing"
     COMPLETE = "complete"
 
 @dataclass
@@ -20,7 +20,7 @@ class GenerateImageRequest:
     style: Optional[str] = None
     guidance: Optional[float] = None
     seed: Optional[int] = None
-    aspect_ratio: Optional[AspectRatio] = None
+    aspect_ratio: Optional[AspectRatios] = None
 
 @dataclass
 class GeneratedImage:
