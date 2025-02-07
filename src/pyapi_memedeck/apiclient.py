@@ -29,6 +29,12 @@ class GeneratedImage:
     caption: Optional[str] = None
     created_at: Optional[str] = None
 
+@dataclass
+class ApiResponse:
+    data: dict
+    remaining_balance: Optional[float] = None
+    remaining_requests_this_minute: Optional[int] = None
+
 class MemeDeckAPIError(Exception):
     """Base exception for MemeDeck API errors"""
     pass
@@ -62,34 +68,56 @@ class MemeDeckClient:
         elif response.status_code != 200:
             raise MemeDeckAPIError(f"API request failed with status {response.status_code}: {response.text}")
         
-        return response.json()
+        return ApiResponse(
+            data = response.json(),
+            remaining_balance = response.headers.get('x-memedeck-remaining-balance'),
+            remaining_requests_this_minute = response.headers.get('x-memedeck-remaining-requests-this-minute'),
+        )
 
-    def reset_api_key(self) -> str:
+    def reset_api_key(self, full: bool = False) -> ApiResponse|str:
         """Reset the API key for your deck"""
         response = requests.post(f"{self.base_url}/api/reset_key", headers=self._headers)
         result = self._handle_response(response)
-        return result["new_key"]
+        if full:
+            return result
+        else:
+            return result.data["new_key"]
 
-    def get_balance(self) -> float:
+    def get_balance(self, full: bool = False) -> ApiResponse|float:
         """Get the current rizz balance for your deck"""
         response = requests.get(f"{self.base_url}/api/balance", headers=self._headers)
         result = self._handle_response(response)
-        return float(result["rizz_balance"])
+        if full:
+            return result
+        else:
+            return float(result.data["rizz_balance"])
 
-    def get_history(self) -> list:
+    def get_history(self, full: bool = False) -> ApiResponse|list:
         """Get the history of actions for your deck"""
         response = requests.get(f"{self.base_url}/api/history", headers=self._headers)
-        return self._handle_response(response)
+        result = self._handle_response(response)
+        if full:
+            return result
+        else:
+            return result.data
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self, full: bool = False) -> Dict[str, Any]:
         """Get statistics about your deck"""
         response = requests.get(f"{self.base_url}/api/stats", headers=self._headers)
-        return self._handle_response(response)
+        result = self._handle_response(response)
+        if full:
+            return result
+        else:
+            return result.data
 
-    def get_styles(self) -> list:
+    def get_styles(self, full: bool = False) -> list:
         """Get available aesthetic styles"""
         response = requests.get(f"{self.base_url}/api/styles")
-        return self._handle_response(response)
+        result = self._handle_response(response)
+        if full:
+            return result
+        else:
+            return result.data
 
     def generate_image(
         self,
@@ -97,7 +125,7 @@ class MemeDeckClient:
         wait: bool = False,
         timeout: int = 300,
         poll_interval: int = 5
-    ) -> Dict[str, Any]:
+    ) -> ApiResponse|GeneratedImage:
         """
         Generate an image using the provided parameters
         
@@ -108,7 +136,7 @@ class MemeDeckClient:
             poll_interval: Time between status checks in seconds (only used if wait=True)
             
         Returns:
-            Dict containing the prompt ID and status, and if waited, the generated image details
+            Either an ApiResponse containing the prompt_id to poll, or the final GeneratedImage if wait was True
         """
         payload = {
             "prompt": request.prompt,
@@ -129,7 +157,7 @@ class MemeDeckClient:
         if not wait:
             return result
             
-        prompt_id = result["prompt_id"]
+        prompt_id = result.data["prompt_id"]
         start_time = time.time()
         
         while time.time() - start_time < timeout:
@@ -156,13 +184,13 @@ class MemeDeckClient:
         )
         result = self._handle_response(response)
         
-        status = ImageStatus(result["status"])
-        if status == ImageStatus.COMPLETE and "image" in result:
+        status = ImageStatus(result.data["status"])
+        if status == ImageStatus.COMPLETE and "image" in result.data:
             return GeneratedImage(
                 status=status,
-                url=result["image"]["url"],
-                caption=result["image"]["caption"],
-                created_at=result["image"]["created_at"]
+                url=result.data["image"]["url"],
+                caption=result.data["image"]["caption"],
+                created_at=result.data["image"]["created_at"]
             )
         return GeneratedImage(status=status)
 
