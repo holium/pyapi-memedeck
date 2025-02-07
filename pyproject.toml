@@ -1,18 +1,22 @@
 [project]
 name = "pyapi_memedeck"
-version = "0.0.1"
+version = "0.0.7"
 authors = [
   { name="Holium", email="daniel@holium.com" },
 ]
 description = "Client library for interacting with MemeDeck's public API"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = "~=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
 ]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
+dependencies = [
+  "requests>=2.31.0"
+]
 
 [project.urls]
 Homepage = "https://github.com/holium/pyapi-memedeck"

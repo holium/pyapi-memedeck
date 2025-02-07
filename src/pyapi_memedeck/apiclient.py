@@ -34,7 +34,7 @@ class MemeDeckAPIError(Exception):
     pass
 
 class MemeDeckClient:
-    def __init__(self, api_key: str, deck_id: str, base_url: str = "https://api.memedeck.com"):
+    def __init__(self, api_key: str, deck_id: str, base_url: str = "https://studio.api.memedeck.xyz"):
         """
         Initialize the MemeDeck API client
         
